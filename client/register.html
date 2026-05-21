@@ -1,0 +1,126 @@
+
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация - Калистеника трекер</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-container {
+            max-width: 450px;
+            margin: 50px auto;
+        }
+        .form-card {
+            max-width: 100%;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .login-link a {
+            color: #ff8c42;
+            text-decoration: none;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container auth-container">
+        <h1>🏋️ Калистеника трекер</h1>
+        
+        <div id="registerForm" class="form-card">
+            <h2>Регистрация</h2>
+            <div id="registerError" class="error hidden"></div>
+            <div id="registerSuccess" class="success hidden"></div>
+            <input type="text" id="regUsername" placeholder="Имя пользователя">
+            <input type="email" id="regEmail" placeholder="Email">
+            <input type="password" id="regPassword" placeholder="Пароль (мин. 4 символа)">
+            <input type="number" id="regWeight" placeholder="Вес (кг)" step="0.1">
+            <input type="number" id="regHeight" placeholder="Рост (см)">
+            <select id="regLevel">
+                <option value="beginner">Начинающий</option>
+                <option value="intermediate">Средний</option>
+                <option value="advanced">Продвинутый</option>
+            </select>
+            <button onclick="handleRegister()">Зарегистрироваться</button>
+            <div class="login-link">
+                <p>Уже есть аккаунт? <a href="login.html">Войти</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost/CalisthenicsAPI/server';
+
+        function showMessage(message, isSuccess = false) {
+            const errorEl = document.getElementById('registerError');
+            const successEl = document.getElementById('registerSuccess');
+            
+            if (isSuccess) {
+                successEl.textContent = message;
+                successEl.classList.remove('hidden');
+                errorEl.classList.add('hidden');
+                setTimeout(() => successEl.classList.add('hidden'), 3000);
+            } else {
+                errorEl.textContent = message;
+                errorEl.classList.remove('hidden');
+                successEl.classList.add('hidden');
+                setTimeout(() => errorEl.classList.add('hidden'), 3000);
+            }
+        }
+
+        async function handleRegister() {
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const weight = document.getElementById('regWeight').value;
+            const height = document.getElementById('regHeight').value;
+            const level = document.getElementById('regLevel').value;
+
+            if (!username || !email || !password) {
+                showMessage('Заполните имя, email и пароль');
+                return;
+            }
+
+            if (password.length < 4) {
+                showMessage('Пароль должен быть не менее 4 символов');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        email: email,
+                        password: password,
+                        weight: weight || null,
+                        height: height || null,
+                        experience_level: level})
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    showMessage('Регистрация успешна! Перенаправляем на вход...', true);
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                } else {
+                    showMessage(data.message || 'Ошибка регистрации. Email может быть занят.');
+                }
+            } catch (error) {
+                showMessage('Ошибка соединения с сервером');
+            }
+        }
+
+        if (localStorage.getItem('user_id')) {
+            window.location.href = 'workouts.html';
+        }
+    </script>
+</body>
+</html>

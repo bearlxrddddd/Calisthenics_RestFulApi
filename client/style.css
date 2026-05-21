@@ -1,0 +1,292 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #eee;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+    color: #ff8c42;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+h2, h3 {
+    color: #ff8c42;
+    border-left: 4px solid #ff8c42;
+    padding-left: 15px;
+    margin: 30px 0 20px 0;
+}
+
+.menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    backdrop-filter: blur(5px);
+}
+
+.menu a, .menu button {
+    background: #ff8c42;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.menu a:hover, .menu button:hover {
+    background: #ffa25e;
+    transform: translateY(-2px);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 15px 0;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+th {
+    background: #ff8c42;
+    color: white;
+    font-weight: bold;
+}
+
+tr:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.form-card {
+    background: rgba(255,255,255,0.1);
+    padding: 25px;
+    border-radius: 15px;
+    max-width: 500px;
+    margin: 20px 0;
+    backdrop-filter: blur(5px);
+}
+
+.form-card input, .form-card select, .form-card textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    background: rgba(0,0,0,0.3);
+    color: white;
+}
+
+.form-card input:focus, .form-card select:focus, .form-card textarea:focus {
+    outline: none;
+    border-color: #ff8c42;
+}
+
+.form-card button {
+    background: #ff8c42;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    margin-right: 10px;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+.form-card button:hover {
+    background: #ffa25e;
+    transform: scale(1.02);
+}
+
+.hidden {
+    display: none;
+}
+
+.error {
+    background: rgba(220,53,69,0.2);
+    border-left: 4px solid #dc3545;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    color: #ff8a8a;
+}
+
+.success {
+    background: rgba(40,167,69,0.2);
+    border-left: 4px solid #28a745;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    color: #8aff8a;
+}
+
+.user-info {
+    text-align: right;
+    padding: 10px;
+    background: rgba(255,255,255,0.1);
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+button.delete {
+    background: #dc3545;
+}
+
+button.delete:hover {
+    background: #c82333;
+}
+
+button.secondary {
+    background: #6c757d;
+}
+
+button.secondary:hover {
+    background: #5a6268;
+}
+
+.inline-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.view-card {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 15px;
+    margin: 20px 0;
+}
+
+.view-card p {
+    margin: 10px 0;
+}
+
+.nav-links {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.nav-links a {
+    color: #ff8c42;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.nav-links a:hover {
+    background: rgba(255,140,66,0.2);
+    text-decoration: underline;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: #ff8c42;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    th, td {
+        display: block;
+    }
+    
+    th {
+        display: none;
+    }
+    
+    td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 10px;
+    }
+    
+    td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #ff8c42;
+        width: 40%;
+    }
+    
+    .menu {
+        flex-direction: column;
+    }
+    
+    .menu a, .menu button {
+        text-align: center;
+    }
+    
+    .form-card {
+        padding: 15px;
+    }
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ff8c42;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ffa25e;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-card, table, .view-card {
+    animation: fadeIn 0.5s ease-out;
+}

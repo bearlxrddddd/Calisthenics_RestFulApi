@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калистеника  - API документация</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .topbar { background-color: #1a1a2e; padding: 10px; color: white; text-align: center; }
+        .topbar h1 { margin: 0; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1> Калистеника  - REST API</h1>
+    </div>
+    <div id="swagger-ui"></div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    
+    <script>
+    const swaggerDocument = {
+        openapi: "3.0.0",
+        info: {
+            title: "Калистеника  API",
+            version: "1.0.0",
+            description: "API для управления тренировками по калистенике"
+        },
+        servers: [
+            { url: "http://localhost/CalisthenicsAPI/server/index.php", description: "Локальный сервер" }
+        ],
+        tags: [
+            { name: "Workouts", description: "Тренировки" },
+            { name: "Users", description: "Пользователи" },
+            { name: "Exercises", description: "Упражнения" },
+            { name: "Sets", description: "Подходы" }
+        ],
+        components: {
+            schemas: {
+                Workout: {
+                    type: "object",
+                    properties: {
+                        id: { type: "integer" },
+                        user_id: { type: "integer" },
+                        workout_date: { type: "string", format: "date" },
+                        duration_minutes: { type: "integer" },
+                        notes: { type: "string" }
+                    }
+                },
+                User: {
+                    type: "object",
+                    properties: {
+                        id: { type: "integer" },
+                        username: { type: "string" },
+                        email: { type: "string" },
+                        weight_kg: { type: "number" },
+                        height_cm: { type: "integer" },
+                        experience_level: { type: "string" },
+                        role: { type: "string" }
+                    }
+                },
+                Exercise: {
+                    type: "object",
+                    properties: {
+                        id: { type: "integer" },
+                        name: { type: "string" },
+                        muscle_group: { type: "string" },
+                        difficulty_level: { type: "string" }
+                    }
+                },
+                Set: {
+                    type: "object",
+                    properties: {
+                        id: { type: "integer" },
+                        workout_id: { type: "integer" },
+                        exercise_id: { type: "integer" },
+                        set_order: { type: "integer" },
+                        repetitions: { type: "integer" },
+                        added_weight_kg: { type: "number" }
+                    }
+                }
+            }
+        },
+        paths: {
+            // ========== WORKOUTS ==========
+            "/workouts": {
+                get: {
+                    tags: ["Workouts"],
+                    summary: "Показать все тренировки из БД",
+                    description: "Возвращает список всех тренировок",
+                    responses: {
+                        200: {
+                            description: "Успешно",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            status: { type: "boolean" },
+                                            data: { type: "array", items: { $ref: "#/components/schemas/Workout" } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                post: {
+                    tags: ["Workouts"],
+                    summary: "Добавить тренировку",
+                    requestBody: {
+                        required: true,
+                        content: {
+                            "application/x-www-form-urlencoded": {
+                                schema: {
+                                    type: "object",
+                                    required: ["user_id", "workout_date", "duration"],
+                                    properties: {
+                                        user_id: { type: "integer", example: 1 },
+                                        workout_date: { type: "string", format: "date", example: "2026-05-20" },
+                                        duration: { type: "integer", example: 45 },
+                                        notes: { type: "string", example: "Хорошая тренировка" }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: {
+                        201: { description: "Создано" },
+                        400: { description: "Ошибка" }
+                    }
+                }
+            },
+            "/workouts/{id}": {
+                get: {
+                    tags: ["Workouts"],
+                    summary: "Показать тренировку по ID",
+                    parameters: [
+                        { name: "id", in: "path", required: true, schema: { type: "integer" } }
+                    ],
+                    responses: { 200: { description: "Успешно" } }
+                },
+                put: {
+                    tags: ["Workouts"],
+                    summary: "Обновить тренировку",
+                    parameters: [
+                        { name: "id", in: "path", required: true, schema: { type: "integer" } }
+                    ],
+                    requestBody: {
+                        required: true,
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: "object",
+                                    properties: {
+                                        workout_date: { type: "string", format: "date" },
+                                        duration: { type: "integer" },
+                                        notes: { type: "string" }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: { 200: { description: "Обновлено" } }
+                },
+                delete: {
+                    tags: ["Workouts"],
+                    summary: "Удалить тренировку",
+                    parameters: [
+                        { name: "id", in: "path", required: true, schema: { type: "integer" } }
+                    ],
+                    responses: { 200: { description: "Удалено" } }
+                }
+            },
+            // ========== USERS ==========
+            "/users": {
+                get: {
+                    tags: ["Users"],
+                    summary: "Показать всех пользователей из БД",
+                    description: "Возвращает список всех пользователей",
+                    responses: {
+                        200: {
+                            description: "Успешно",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            status: { type: "boolean" },
+                                            data: { type: "array", items: { $ref: "#/components/schemas/User" } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                post: {
+                    tags: ["Users"],
+                    summary: "Добавить пользователя",
+                    requestBody: {
+                        required: true,
+                        content: {
+                            "application/x-www-form-urlencoded": {
+                                schema: {
+                                    type: "object",
+                                    required: ["username", "email"],
+                                    properties: {
+                                        username: { type: "string", example: "john" },
+                                        email: { type: "string", example: "john@mail.ru" },
+                                        weight: { type: "number", example: 70 },
+                                        height: { type: "integer", example: 175 }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: { 201: { description: "Создано" } }
+                }
+            },
+            "/users/{id}": {
+                get: {
+                    tags: ["Users"],
+                    summary: "Показать пользователя по ID",
+                    parameters: [
+                        { name: "id", in: "path", required: true, schema: { type: "integer" } }
+                    ],
+                    responses: { 200: { description: "Успешно" } }
+                },
+                put: {
+                    tags: ["Users"],
+                    summary: "Обновить пользователя",
+                    parameters: [
+                        { name: "id", in: "path", required: true, schema: { type: "integer" } }
+                    ],
+                    requestBody: {
+                        required: true,
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: "object",
+                                    properties: {
+                                        username: { type: "string" },
+                                        email: { type: "string" },
+                                        weight: { type: "number" },
+                                        height: { type: "integer" }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: { 200: { description: "Обновлено" } }
+                },
+                delete: {
+                    tags: ["Users"],
+                    summary: "Удалить пользователя",
+                    parameters: [
+                        { name: "id", in: "path", required: true, schema: { type: "integer" } }
+                    ],
+                    responses: { 200: { description: "Удалено" } }
+                }
+            },
+            // ========== EXERCISES ==========
+            "/exercises": {
+                get: {
+                    tags: ["Exercises"],
+                    summary: "Показать все упражнения из БД",
+                    description: "Возвращает список всех упражнений",
+                    responses: {
+                        200: {
+                            description: "Успешно",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            status: { type: "boolean" },
+                                            data: { type: "array", items: { $ref: "#/components/schemas/Exercise" } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            // ========== SETS ==========
+            "/sets/{workout_id}": {
+                get: {
+                    tags: ["Sets"],
+                    summary: "Показать подходы тренировки из БД",
+                    description: "Возвращает все подходы для указанной тренировки",
+                    parameters: [
+                        { name: "workout_id", in: "path", required: true, schema: { type: "integer" } }
+                    ],
+                    responses: {
+                        200: {
+                            description: "Успешно",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            status: { type: "boolean" },
+                                            data: { type: "array", items: { $ref: "#/components/schemas/Set" } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/sets": {
+                post: {
+                    tags: ["Sets"],
+                    summary: "Добавить подход",
+                    requestBody: {
+                        required: true,
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: "object",
+                                    required: ["workout_id", "exercise_id", "set_order", "repetitions"],
+                                    properties: {
+                                        workout_id: { type: "integer", example: 1 },
+                                        exercise_id: { type: "integer", example: 1 },
+                                        set_order: { type: "integer", example: 1 },
+                                        repetitions: { type: "integer", example: 10 },
+                                        weight: { type: "number", example: 0 }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: { 201: { description: "Создано" } }
+                }
+            },
+            "/sets/{id}": {
+                put: {
+                    tags: ["Sets"],
+                    summary: "Обновить подход",
+                    parameters: [
+                        { name: "id", in: "path", required: true, schema: { type: "integer" } }
+                    ],
+                    requestBody: {
+                        required: true,
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: "object",
+                                    properties: {
+                                        exercise_id: { type: "integer" },
+                                        set_order: { type: "integer" },
+                                        repetitions: { type: "integer" },
+                                        weight: { type: "number" }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: { 200: { description: "Обновлено" } }
+                },
+                delete: {
+                    tags: ["Sets"],summary: "Удалить подход",
+                    parameters: [
+                        { name: "id", in: "path", required: true, schema: { type: "integer" } }
+                    ],
+                    responses: { 200: { description: "Удалено" } }
+                }
+            }
+        }
+    };
+
+    window.onload = function() {
+        const ui = SwaggerUIBundle({
+            spec: swaggerDocument,
+            dom_id: '#swagger-ui',
+            presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+            layout: "BaseLayout",
+            docExpansion: "list",
+            filter: true
+        });
+        window.ui = ui;
+    };
+    </script>
+</body>
+</html>

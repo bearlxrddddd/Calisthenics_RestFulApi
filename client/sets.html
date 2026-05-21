@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подходы - Калистеника трекер</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="user-info" id="userInfo"></div>
+        
+        <div class="menu">
+            <a href="workouts.html">📋 Тренировки</a>
+            <a href="users.html">👥 Пользователи</a>
+            <a href="exercises.html">🏋️ Упражнения</a>
+            <a href="sets.html">📊 Подходы</a>
+            <button onclick="logout()">🚪 Выход</button>
+        </div>
+
+        <div>
+            <p>Введите ID тренировки: <input type="number" id="workoutIdFilter" placeholder="ID тренировки"></p>
+            <div class="inline-buttons">
+                <button onclick="loadSets()">📊 Показать подходы</button>
+                <button onclick="showAddForm()">➕ Добавить подход</button>
+            </div>
+        </div>
+
+        <div id="setsList"></div>
+        <div id="formContainer" class="form-card hidden"></div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const API_URL = 'http://localhost/CalisthenicsAPI/server/api';
+        let currentWorkoutId = null;
+
+        function checkAuth() {
+            if (!localStorage.getItem('user_id')) window.location.href = 'index.html';
+        }
+
+        function updateUserInfo() {
+            document.getElementById('userInfo').innerHTML = `👋 ${localStorage.getItem('username')} | ${localStorage.getItem('role') === 'admin' ? 'Админ' : 'Пользователь'}`;
+        }
+
+        async function loadExercisesForSelect() {
+            const response = await fetch(`${API_URL}/exercises`);
+            const data = await response.json();
+            return data.data || [];
+        }
+
+        async function loadSets() {
+            const workoutId = document.getElementById('workoutIdFilter').value;
+            if (!workoutId) {
+                alert('Введите ID тренировки');
+                return;
+            }
+            currentWorkoutId = workoutId;
+            try {
+                const response = await fetch(`${API_URL}/sets/${workoutId}`);
+                const data = await response.json();
+                const container = document.getElementById('setsList');
+                
+                if (data.status && data.data.length) {
+                    let html = `<h2>📊 Подходы тренировки #${workoutId}</h2>`;
+                    html += `表格`;
+                    html += `<tr><th>ID</th><th>Подход</th><th>Упражнение</th><th>Повторения</th><th>Вес</th><th>Действия</th>`;
+                    data.data.forEach(s => {
+                        html += `<tr>
+                            <td data-label="ID">${s.id}</td>
+                            <td data-label="Подход">${s.set_order}</td>
+                            <td data-label="Упражнение">${s.exercise_name}</td>
+                            <td data-label="Повторения">${s.repetitions}</td>
+                            <td data-label="Вес">${s.added_weight_kg} кг</td>
+                            <td data-label="Действия">
+                                <button onclick="editSet(${s.id})">✏️</button>
+                                <button onclick="deleteSet(${s.id})" class="delete">🗑️</button>
+                            </td>
+                        </tr>`;
+                    });
+                    html += `</table>`;
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<p>Нет подходов в этой тренировке</p>';
+                }
+            } catch(e) {
+                document.getElementById('setsList').innerHTML = '<p class="error">Ошибка загрузки</p>';
+            }
+        }
+
+        async function showAddForm() {
+            const exercises = await loadExercisesForSelect();
+            let options = '';
+            exercises.forEach(e => { options += `<option value="${e.id}">${e.name}</option>`; });
+            
+            document.getElementById('formContainer').innerHTML = `
+                <h3>➕ Добавить подход</h3>
+                <input type="number" id="setWorkoutId" placeholder="ID тренировки" value="${currentWorkoutId || ''}">
+                <select id="setExerciseId">${options}</select>
+                <input type="number" id="setOrder" placeholder="Номер подхода">
+                <input type="number" id="setReps" placeholder="Повторения">
+                <input type="number" id="setWeight" placeholder="Вес (кг)" value="0" step="0.5">
+                <div class="inline-buttons">
+                    <button onclick="saveSet(null)">💾 Сохранить</button>
+                    <button onclick="cancelForm()" class="secondary">Отмена</button>
+                </div>
+            `;
+            document.getElementById('formContainer').classList.remove('hidden');
+        }
+
+        async function editSet(id) {
+            const response = await fetch(`${API_URL}/sets/${id}`);
+            const data = await response.json();
+            if (data.status) {
+                const s = data.data;
+                const exercises = await loadExercisesForSelect();
+                let options = '';
+                exercises.forEach(e => { options += `<option value="${e.id}" ${e.id == s.exercise_id ? 'selected' : ''}>${e.name}</option>`; });
+                
+                document.getElementById('formContainer').innerHTML = `
+                    <h3>✏️ Редактировать подход #${id}</h3>
+                    <select id="setExerciseId">${options}</select>
+                    <input type="number" id="setOrder" value="${s.set_order}" placeholder="Номер подхода">
+                    <input type="number" id="setReps" value="${s.repetitions}" placeholder="Повторения">
+                    <input type="number" id="setWeight" value="${s.added_weight_kg}" placeholder="Вес (кг)" step="0.5">
+                    <div class="inline-buttons">
+                        <button onclick="saveSet(${id})">💾 Обновить</button>
+                        <button onclick="cancelForm()" class="secondary">Отмена</button>
+                    </div>
+                `;
+                document.getElementById('formContainer').classList.remove('hidden');
+            }
+        }
+
+        async function saveSet(id) {
+            const workout_id = document.getElementById('setWorkoutId') ? document.getElementById('setWorkoutId').value : currentWorkoutId;
+            const exercise_id = document.getElementById('setExerciseId').value;
+            const set_order = document.getElementById('setOrder').value;
+            const repetitions = document.getElementById('setReps').value;
+            const weight = document.getElementById('setWeight').value;
+
+            if (!workout_id || !exercise_id || !set_order || !repetitions) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            const data = { workout_id, exercise_id, set_order, repetitions, weight: weight || 0 };
+
+            if (id) {
+                await fetch(`${API_URL}/sets/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ exercise_id, set_order, repetitions, weight: weight || 0 })
+                });
+                alert('✅ Подход обновлён');
+            } else {
+                await fetch(`${API_URL}/sets`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                alert('✅ Подход добавлен');
+            }
+            cancelForm();
+            if (workout_id) {
+                document.getElementById('workoutIdFilter').value = workout_id;
+                loadSets();
+            }
+        }
+
+        function cancelForm() {
+            document.getElementById('formContainer').classList.add('hidden');
+        }
+
+        async function deleteSet(id) {
+            if (confirm('Удалить подход?')) {
+                await fetch(`${API_URL}/sets/${id}`, { method: 'DELETE' });
+                alert('✅ Подход удалён');
+                if (currentWorkoutId) loadSets();
+            }
+        }
+
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+
+        checkAuth();
+        updateUserInfo();
+    </script>
+</body>
+</html>

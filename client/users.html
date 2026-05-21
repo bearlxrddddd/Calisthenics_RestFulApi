@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пользователи - Калистеника </title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="user-info" id="userInfo"></div>
+        
+        <div class="menu">
+            <a href="workouts.html">📋 Тренировки</a>
+            <a href="users.html">👥 Пользователи</a>
+            <a href="exercises.html">🏋️ Упражнения</a>
+            <a href="sets.html">📊 Подходы</a>
+            <button onclick="logout()">🚪 Выход</button>
+        </div>
+
+        <div id="adminOnly">
+            <div class="inline-buttons">
+                <button onclick="showAddForm()">➕ Добавить пользователя</button>
+            </div>
+            <div id="usersList"></div>
+        </div>
+        <div id="formContainer" class="form-card hidden"></div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const API_URL = 'http://localhost/CalisthenicsAPI/';
+
+        function checkAuth() {
+            if (!localStorage.getItem('user_id')) window.location.href = 'index.html';
+            if (localStorage.getItem('role') !== 'admin') {
+                document.getElementById('adminOnly').innerHTML = '<p class="error">Доступ только для администратора</p>';
+            }
+        }
+
+        function updateUserInfo() {
+            document.getElementById('userInfo').innerHTML = `👋 ${localStorage.getItem('username')} | ${localStorage.getItem('role') === 'admin' ? 'Админ' : 'Пользователь'}`;
+        }
+
+        async function loadUsers() {
+            if (localStorage.getItem('role') !== 'admin') return;
+            try {
+                const response = await fetch(`${API_URL}/users`);
+                const data = await response.json();
+                const container = document.getElementById('usersList');
+                
+                if (data.status && data.data.length) {
+                    let html = `<h2>👥 Пользователи</h2><table>`;
+                    html += `<tr><th>ID</th><th>Имя</th><th>Email</th><th>Вес</th><th>Роль</th><th>Действия</th></tr>`;
+                    data.data.forEach(u => {
+                        html += `<tr>
+                            <td data-label="ID">${u.id}</td>
+                            <td data-label="Имя">${u.username}</td>
+                            <td data-label="Email">${u.email}</td>
+                            <td data-label="Вес">${u.weight_kg || '-'} кг</td>
+                            <td data-label="Роль">${u.role}</td>
+                            <td data-label="Действия">
+                                <button onclick="viewUser(${u.id})">👁️</button>
+                                <button onclick="editUser(${u.id})">✏️</button>
+                                <button onclick="deleteUser(${u.id})" class="delete">🗑️</button>
+                            </td>
+                        </tr>`;
+                    });
+                    html += `</table>`;
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<p>Нет пользователей</p>';
+                }
+            } catch(e) {
+                document.getElementById('usersList').innerHTML = '<p class="error">Ошибка загрузки</p>';
+            }
+        }
+
+        function showAddForm() {
+            document.getElementById('formContainer').innerHTML = `
+                <h3>➕ Новый пользователь</h3>
+                <input type="text" id="userName" placeholder="Имя">
+                <input type="email" id="userEmail" placeholder="Email">
+                <input type="number" id="userWeight" placeholder="Вес (кг)" step="0.1">
+                <input type="number" id="userHeight" placeholder="Рост (см)">
+                <select id="userRole"><option value="user">Пользователь</option><option value="admin">Администратор</option></select>
+                <div class="inline-buttons"><button onclick="saveUser(null)">💾 Сохранить</button><button onclick="cancelForm()" class="secondary">Отмена</button></div>
+            `;
+            document.getElementById('formContainer').classList.remove('hidden');
+        }
+
+        async function editUser(id) {
+            const response = await fetch(`${API_URL}/users/${id}`);
+            const data = await response.json();
+            if (data.status) {
+                const u = data.data;
+                document.getElementById('formContainer').innerHTML = `
+                    <h3>✏️ Редактировать пользователя #${id}</h3>
+                    <input type="text" id="userName" value="${u.username}">
+                    <input type="email" id="userEmail" value="${u.email}">
+                    <input type="number" id="userWeight" value="${u.weight_kg || ''}" step="0.1">
+                    <input type="number" id="userHeight" value="${u.height_cm || ''}">
+                    <select id="userRole"><option value="user" ${u.role === 'user' ? 'selected' : ''}>Пользователь</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Администратор</option></select>
+                    <div class="inline-buttons"><button onclick="saveUser(${id})">💾 Обновить</button><button onclick="cancelForm()" class="secondary">Отмена</button></div>
+                `;
+                document.getElementById('formContainer').classList.remove('hidden');
+            }
+        }
+
+        async function saveUser(id) {
+            const data = {
+                username: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                weight: document.getElementById('userWeight').value,
+                height: document.getElementById('userHeight').value,
+                role: document.getElementById('userRole').value
+            };
+            if (id) {
+                await fetch(`${API_URL}/users/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                alert('✅ Обновлено');
+            } else {
+                const formData = new URLSearchParams();
+                for (let k in data) formData.append(k, data[k]);
+                await fetch(`${API_URL}/users`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData });
+                alert('✅ Добавлено');
+            }
+            cancelForm();
+            loadUsers();
+        }
+
+        function cancelForm() {
+            document.getElementById('formContainer').classList.add('hidden');
+        }
+
+        async function viewUser(id) {
+            const response = await fetch(`${API_URL}/users/${id}`);
+            const data = await response.json();
+            if (data.status) {
+                const u = data.data;
+                document.getElementById('usersList').innerHTML = `
+                    <div class="view-card">
+                        <h3>Пользователь #${u.id}</h3>
+                        <p><strong>Имя:</strong> ${u.username}</p>
+                        <p><strong>Email:</strong> ${u.email}</p>
+                        <p><strong>Вес:</strong> ${u.weight_kg || '-'} кг</p>
+                        <p><strong>Рост:</strong> ${u.height_cm || '-'} см</p>
+                        <p><strong>Роль:</strong> ${u.role}</p>
+                        <div class="inline-buttons"><button onclick="loadUsers()">◀ Назад</button></div>
+                    </div>
+                `;
+            }
+        }
+
+        async function deleteUser(id) {
+            if (confirm('Удалить пользователя?')) {
+                await fetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
+                alert('✅ Удалено');
+                loadUsers();
+            }
+        }
+
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+
+        checkAuth();
+        updateUserInfo();
+        loadUsers();
+    </script>
+</body>
+</html>
